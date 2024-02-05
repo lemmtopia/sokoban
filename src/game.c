@@ -20,7 +20,7 @@ int vsp = 0;
 SDL_Surface* player_surf;
 SDL_Surface* box_surf;
 SDL_Surface* wall_surf;
-    SDL_Surface* bg_surf;
+SDL_Surface* bg_surf;
 
 SDL_Texture* player_tex;
 SDL_Texture* box_tex;
@@ -50,7 +50,6 @@ void game_initialize(SDL_Renderer* renderer) {
         game_data.type[i] = 0; 
     }
 
-    
     game_data.x[game_data.num_tiles] = 0;
     game_data.y[game_data.num_tiles] = 0;
     game_data.type[game_data.num_tiles] = 0;
@@ -80,19 +79,27 @@ void load_level(const char *path) {
         return;
     }
 
-    for (int i = 0; i < LEVEL_W; i++) {
-        for (int j = 0; j < LEVEL_H; j++) {
-            char c;
-            int z;
-            fread(&c, 1, 1, f); 
-            
-                z = c - 0x30;
+    int z = 0;
+    int y = 0;
 
-            game_data.num_tiles++;
-            game_data.x[game_data.num_tiles - 1] = i * TILE_SIZE * SCALE;
-            game_data.y[game_data.num_tiles - 1] = j * TILE_SIZE * SCALE;
-            game_data.type[game_data.num_tiles - 1] = z;
+    for (int i = 0; i < LEVEL_W * LEVEL_H; i++) {
+        if (z >= LEVEL_W) {
+            z = 0;
+            y++;
         }
+
+        char c;
+        int z2;
+        fread(&c, 1, 1, f); 
+        
+        z2 = c - 0x30;
+
+        game_data.num_tiles++;
+        game_data.x[game_data.num_tiles - 1] = z * TILE_SIZE * SCALE;
+        game_data.y[game_data.num_tiles - 1] = y * TILE_SIZE * SCALE;
+        game_data.type[game_data.num_tiles - 1] = z2;
+
+        z++;
     }
 }
 
