@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "defs.h"
+#include <SDL2/SDL_image.h>
 
 SDL_Window* window;
 SDL_Renderer* renderer;
@@ -13,7 +14,7 @@ int initialize_sdl();
 int main(int argc, char* argv[]) {
     is_running = initialize_sdl();
     
-    game_initialize();
+    game_initialize(renderer);
     while (is_running) {
         is_running = game_process_input();
         game_update();
@@ -47,6 +48,8 @@ int initialize_sdl() {
         printf("Could not create the window\n");
         return FALSE;
     }
+
+    IMG_Init(IMG_INIT_PNG);
 
     return TRUE;
 }

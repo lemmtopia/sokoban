@@ -1,6 +1,9 @@
 #include "defs.h"
 
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_surface.h>
 #include <stdint.h>
+#include <SDL2/SDL_image.h>
 
 int last_frame_time;
 
@@ -12,6 +15,16 @@ int last_up = 0;
 
 int hsp = 0;
 int vsp = 0;
+
+SDL_Surface* player_surf;
+SDL_Surface* box_surf;
+SDL_Surface* wall_surf;
+    SDL_Surface* bg_surf;
+
+SDL_Texture* player_tex;
+SDL_Texture* box_tex;
+SDL_Texture* wall_tex;
+SDL_Texture* bg_tex;
 
 struct {
     int x[MAX_TILES];
@@ -25,7 +38,7 @@ struct {
 int check_aabb(int tile1, int tile2, int xx, int yy);
 void player_movement();
 
-void game_initialize() {
+void game_initialize(SDL_Renderer* renderer) {
     game_data.player_id = 0;
     game_data.num_tiles = 1;
 
@@ -39,9 +52,41 @@ void game_initialize() {
     game_data.num_tiles++;
     game_data.x[game_data.num_tiles - 1] = TILE_SIZE * SCALE * 2; 
     game_data.y[game_data.num_tiles - 1] = TILE_SIZE * SCALE; 
+    game_data.type[game_data.num_tiles - 1] = TYPE_BOX;
+
     game_data.num_tiles++;
     game_data.x[game_data.num_tiles - 1] = TILE_SIZE * SCALE * 4; 
     game_data.y[game_data.num_tiles - 1] = TILE_SIZE * SCALE; 
+    game_data.type[game_data.num_tiles - 1] = TYPE_BOX;
+
+    game_data.num_tiles++;
+    game_data.x[game_data.num_tiles - 1] = TILE_SIZE * SCALE * 4; 
+    game_data.y[game_data.num_tiles - 1] = TILE_SIZE * SCALE * 3; 
+    game_data.type[game_data.num_tiles - 1] = TYPE_UNDEFINED;
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            game_data.num_tiles++;
+            game_data.x[game_data.num_tiles - 1] = TILE_SIZE * SCALE * i; 
+            game_data.y[game_data.num_tiles - 1] = TILE_SIZE * SCALE * j; 
+            game_data.type[game_data.num_tiles - 1] = TYPE_BG;
+        }
+    }
+
+    player_surf = IMG_Load("assets/player.png");
+    wall_surf = IMG_Load("assets/wall.png");
+    box_surf = IMG_Load("assets/box.png");
+    bg_surf = IMG_Load("assets/bg.png");
+
+    player_tex = SDL_CreateTextureFromSurface(renderer, player_surf);
+    wall_tex = SDL_CreateTextureFromSurface(renderer, wall_surf);
+    bg_tex = SDL_CreateTextureFromSurface(renderer, bg_surf);
+    box_tex = SDL_CreateTextureFromSurface(renderer, box_surf);
+
+    SDL_FreeSurface(player_surf);
+    SDL_FreeSurface(box_surf);
+    SDL_FreeSurface(bg_surf);
+    SDL_FreeSurface(wall_surf);
 }
 
 int game_process_input() {
@@ -66,10 +111,19 @@ void game_draw(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
     for (int i = 0; i < game_data.num_tiles; i++) {
-        if (i == 0) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        else SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_Rect tile = {game_data.x[i], game_data.y[i], TILE_SIZE * SCALE, TILE_SIZE * SCALE};
-        SDL_RenderFillRect(renderer, &tile);
+        if (game_data.type[i] == TYPE_BG) SDL_RenderCopy(renderer, bg_tex, NULL, &tile);
+    }
+
+    for (int i = 0; i < game_data.num_tiles; i++) {
+        SDL_Rect tile = {game_data.x[i], game_data.y[i], TILE_SIZE * SCALE, TILE_SIZE * SCALE};
+
+        if (i == game_data.player_id) {
+            SDL_RenderCopy(renderer, player_tex, NULL, &tile);
+        } else {
+            if (game_data.type[i] == TYPE_BOX) SDL_RenderCopy(renderer, box_tex, NULL, &tile);
+            else if (game_data.type[i] == TYPE_UNDEFINED) SDL_RenderCopy(renderer, wall_tex, NULL, &tile);
+        }
     }
 
     SDL_RenderPresent(renderer);
@@ -113,17 +167,17 @@ void player_movement() {
     } 
 
     for (int i = game_data.player_id + 1; i < game_data.num_tiles; i++) {
-        box = check_aabb(game_data.player_id, i, sign(hsp), sign(vsp));
+        box = check_aabb(game_data.player_id, i, sign(hsp), sign(vsp)) && game_data.type[i] != TYPE_BG;
 
         for (int j = 0; j < game_data.num_tiles; j++) {
             if (j != i) {
-                box2 = check_aabb(i, j, sign(hsp), sign(vsp));
+                box2 = check_aabb(i, j, sign(hsp), sign(vsp)) && game_data.type[j] != TYPE_BG;
                 if (box2) break;
             }
         }
 
         if (box) {
-            if (!box2) {
+            if (!box2 && game_data.type[i] == TYPE_BOX) {
                 game_data.x[i] += hsp;
                 game_data.y[i] += vsp;
             }

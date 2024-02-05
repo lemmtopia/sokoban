@@ -15,8 +15,9 @@
 
 #define TYPE_UNDEFINED 0
 #define TYPE_BOX 1
+#define TYPE_BG 2
 
-void game_initialize();
+void game_initialize(SDL_Renderer* renderer);
 int game_process_input();
 void game_update();
 void game_draw(SDL_Renderer* renderer);
