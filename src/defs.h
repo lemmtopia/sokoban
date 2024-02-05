@@ -6,8 +6,11 @@
 #define TRUE 1
 #define FALSE 0
 
-#define MAX_TILES 32
+#define MAX_TILES 256
 #define TILE_SIZE 8
+
+#define LEVEL_W 14
+#define LEVEL_H 8
 
 #define WIDTH 320
 #define HEIGHT 180
@@ -18,6 +21,7 @@
 #define TYPE_BG 2
 
 void game_initialize(SDL_Renderer* renderer);
+void load_level(const char* path);
 int game_process_input();
 void game_update();
 void game_draw(SDL_Renderer* renderer);

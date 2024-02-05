@@ -4,6 +4,7 @@
 #include <SDL2/SDL_surface.h>
 #include <stdint.h>
 #include <SDL2/SDL_image.h>
+#include <stdio.h>
 
 int last_frame_time;
 
@@ -49,29 +50,10 @@ void game_initialize(SDL_Renderer* renderer) {
         game_data.type[i] = 0; 
     }
 
-    game_data.num_tiles++;
-    game_data.x[game_data.num_tiles - 1] = TILE_SIZE * SCALE * 2; 
-    game_data.y[game_data.num_tiles - 1] = TILE_SIZE * SCALE; 
-    game_data.type[game_data.num_tiles - 1] = TYPE_BOX;
-
-    game_data.num_tiles++;
-    game_data.x[game_data.num_tiles - 1] = TILE_SIZE * SCALE * 4; 
-    game_data.y[game_data.num_tiles - 1] = TILE_SIZE * SCALE; 
-    game_data.type[game_data.num_tiles - 1] = TYPE_BOX;
-
-    game_data.num_tiles++;
-    game_data.x[game_data.num_tiles - 1] = TILE_SIZE * SCALE * 4; 
-    game_data.y[game_data.num_tiles - 1] = TILE_SIZE * SCALE * 3; 
-    game_data.type[game_data.num_tiles - 1] = TYPE_UNDEFINED;
-
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            game_data.num_tiles++;
-            game_data.x[game_data.num_tiles - 1] = TILE_SIZE * SCALE * i; 
-            game_data.y[game_data.num_tiles - 1] = TILE_SIZE * SCALE * j; 
-            game_data.type[game_data.num_tiles - 1] = TYPE_BG;
-        }
-    }
+    
+    game_data.x[game_data.num_tiles] = 0;
+    game_data.y[game_data.num_tiles] = 0;
+    game_data.type[game_data.num_tiles] = 0;
 
     player_surf = IMG_Load("assets/player.png");
     wall_surf = IMG_Load("assets/wall.png");
@@ -87,6 +69,31 @@ void game_initialize(SDL_Renderer* renderer) {
     SDL_FreeSurface(box_surf);
     SDL_FreeSurface(bg_surf);
     SDL_FreeSurface(wall_surf);
+
+    load_level("assets/levels/test.txt");
+}
+
+void load_level(const char *path) {
+    FILE* f = fopen(path, "r");
+    if (f == NULL) {
+        printf("Could not open level\n");
+        return;
+    }
+
+    for (int i = 0; i < LEVEL_W; i++) {
+        for (int j = 0; j < LEVEL_H; j++) {
+            char c;
+            int z;
+            fread(&c, 1, 1, f); 
+            
+                z = c - 0x30;
+
+            game_data.num_tiles++;
+            game_data.x[game_data.num_tiles - 1] = i * TILE_SIZE * SCALE;
+            game_data.y[game_data.num_tiles - 1] = j * TILE_SIZE * SCALE;
+            game_data.type[game_data.num_tiles - 1] = z;
+        }
+    }
 }
 
 int game_process_input() {
